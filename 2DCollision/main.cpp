@@ -11,11 +11,17 @@
 
 int main()
 {
+	
+	int currentPlayerBoundary;
+	int currentMouseBoundary;
+
+
 	// Create the main window
 	sf::RenderWindow window(sf::VideoMode(800, 600), "SFML window");
 
 	// Load a sprite to display
 	sf::Texture sprite_sheet;
+	
 	if (!sprite_sheet.loadFromFile("assets\\grid.png")) {
 		DEBUG_MSG("Failed to load file");
 		return EXIT_FAILURE;
@@ -28,10 +34,34 @@ int main()
 		return EXIT_FAILURE;
 	}
 
+	sf::Texture circle_texture;
+	if (!circle_texture.loadFromFile("assets\\mouseCircle.png"))
+	{
+		DEBUG_MSG("Failed to load file");
+		return EXIT_FAILURE;
+	}
+
+	sf::Font m_font;
+	if (!m_font.loadFromFile("assets\\ARLRDBD.ttf"))
+	{
+		DEBUG_MSG("Failed to load file");
+		return EXIT_FAILURE;
+	}
+	sf::Text m_text[2];
+	for (int i = 0; i < 2; i++)
+	{
+		m_text[i].setFont(m_font);
+		m_text[i].setCharacterSize(15);
+		m_text[i].setFillColor(sf::Color::White);
+		m_text[i].setPosition(50 + (i * 400), 500);
+	}
+
+
 	// Setup a mouse Sprite
 	sf::Sprite mouse;
 	mouse.setTexture(mouse_texture);
-	mouse.setOrigin(mouse.getGlobalBounds().width / 2, mouse.getGlobalBounds().height / 2);
+	
+	//mouse.setOrigin(mouse.getGlobalBounds().width / 2, mouse.getGlobalBounds().height / 2);
 
 	//Setup mouse AABB
 	c2AABB aabb_mouse;
@@ -40,18 +70,31 @@ int main()
 
 	//Setup mouse Circle
 	c2Circle circle_mouse;
-	circle_mouse.p = c2V(mouse.getPosition().x, mouse.getPosition().y);
-	circle_mouse.r = mouse.getGlobalBounds().height/2;
+	circle_mouse.p = c2V(mouse.getPosition().x/* + mouse.getGlobalBounds().width / 2.0*/, mouse.getPosition().y/* + mouse.getGlobalBounds().height / 2.0*/);
+	circle_mouse.r = mouse.getGlobalBounds().height/2.0;
 
 	//Setup mouse Ray
 	c2Ray ray_mouse;
 	//Setup mouse Capsule
 	c2Capsule capsule_mouse;
+	capsule_mouse.a = c2V(mouse.getPosition().x, mouse.getPosition().y);
+	capsule_mouse.b = c2V(mouse.getPosition().x + mouse.getGlobalBounds().width, mouse.getPosition().y);
+	capsule_mouse.r = mouse.getGlobalBounds().height / 2.0;
 	//Setup mouse Polygon
-	c2Poly polygon_mouse;
+	c2Poly * polygon_mouse = new c2Poly;
+	polygon_mouse->count = 4;
+	polygon_mouse->verts[0] = c2V(mouse.getPosition().x,mouse.getPosition().y );
+	polygon_mouse->verts[1] = c2V(mouse.getPosition().x + mouse.getGlobalBounds().width, mouse.getPosition().y);
+	polygon_mouse->verts[2] = c2V(mouse.getPosition().x + mouse.getGlobalBounds().width, mouse.getPosition().y + mouse.getGlobalBounds().height);
+	polygon_mouse->verts[3] = c2V(mouse.getPosition().x, mouse.getPosition().y + mouse.getGlobalBounds().height);
+	
 
 	// Setup Players Default Animated Sprite
 	AnimatedSprite animated_sprite(sprite_sheet);
+
+
+	animated_sprite.addFrame(sf::IntRect(0,0,87,88));
+
 	animated_sprite.addFrame(sf::IntRect(3, 3, 84, 84));
 	animated_sprite.addFrame(sf::IntRect(88, 3, 84, 84));
 	animated_sprite.addFrame(sf::IntRect(173, 3, 84, 84));
@@ -68,13 +111,18 @@ int main()
 
 	//Setup Players Circle
 	c2Circle circle_player;
-	circle_player.p = c2V(animated_sprite.getPosition().x + animated_sprite.getGlobalBounds().height / 2,
-						  animated_sprite.getPosition().y + animated_sprite.getGlobalBounds().width / 2);
-	circle_player.r = animated_sprite.getGlobalBounds().height / 2;
+	circle_player.p = c2V(animated_sprite.getPosition().x + ((animated_sprite.getGlobalBounds().width / 2.0) / (animated_sprite.getFrames().size())),
+						  animated_sprite.getPosition().y + ((animated_sprite.getGlobalBounds().height / 2.0) / (animated_sprite.getFrames().size())));
+	
+	
+	circle_player.r = (animated_sprite.getGlobalBounds().height / 2.0) / (animated_sprite.getFrames().size());
 	//Setup Players Ray
 	c2Ray ray_player;
 	//Setup Players Capsule
 	c2Capsule capsule_player;
+	capsule_player.a = c2V(animated_sprite.getPosition().x, animated_sprite.getPosition().y);
+	capsule_player.b = c2V(animated_sprite.getPosition().x + (animated_sprite.getGlobalBounds().width / (animated_sprite.getFrames().size())), animated_sprite.getPosition().y);
+	capsule_player.r = (animated_sprite.getGlobalBounds().height / 2.0) / (animated_sprite.getFrames().size());
 	//Setup Players Polygon
 	c2Poly polygon_player;
 
@@ -96,7 +144,19 @@ int main()
 		aabb_mouse.max = c2V(mouse.getGlobalBounds().width, mouse.getGlobalBounds().width);
 
 		// update mouse circle
-		circle_mouse.p = c2V(mouse.getPosition().x, mouse.getPosition().y);
+		circle_mouse.p = c2V(mouse.getPosition().x/* + (mouse.getGlobalBounds().width / 2.0)*/,
+							 mouse.getPosition().y/* + (mouse.getGlobalBounds().height / 2.0)*/);
+
+		//update mouse capsule
+		capsule_mouse.a = c2V(mouse.getPosition().x, mouse.getPosition().y);
+		capsule_mouse.b = c2V(mouse.getPosition().x + mouse.getGlobalBounds().width, mouse.getPosition().y);
+
+		polygon_mouse->verts[0] = c2V(mouse.getPosition().x, mouse.getPosition().y);
+		polygon_mouse->verts[1] = c2V(mouse.getPosition().x + mouse.getGlobalBounds().width, mouse.getPosition().y);
+		polygon_mouse->verts[2] = c2V(mouse.getPosition().x + mouse.getGlobalBounds().width, mouse.getPosition().y + mouse.getGlobalBounds().height);
+		polygon_mouse->verts[3] = c2V(mouse.getPosition().x, mouse.getPosition().y + mouse.getGlobalBounds().height);
+		
+		
 
 		// Process events
 		sf::Event event;
@@ -121,6 +181,16 @@ int main()
 				{
 					input.setCurrent(Input::Action::UP);
 				}
+				else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
+				{
+					
+					
+				}
+				else if (sf::Keyboard::isKeyPressed(sf::Keyboard::BackSpace))
+				{
+					
+					
+				}
 				break;
 			default:
 				input.setCurrent(Input::Action::IDLE);
@@ -139,17 +209,44 @@ int main()
 		
 		
 
-		//result = c2AABBtoAABB(aabb_mouse, aabb_player);
-		//result = c2CircletoAABB(circle_mouse, aabb_player);
 
+
+		#ifdef test
+		result = c2AABBtoAABB(aabb_mouse, aabb_player);
+		result = c2CircletoAABB(circle_mouse, aabb_player);
+		result = c2AABBtoCapsule(aabb_mouse, capsule_player);
+		result = c2AABBtoPoly(aabb_player, polygon_mouse, NULL);
 		result = c2CircletoCircle(circle_mouse, circle_player);
+		result = c2CircletoCapsule(circle_mouse, capsule_player);
+		result = c2CircletoPoly(circle_mouse, polygon_player);
+		result = c2CapsuletoPoly(capsule_mouse, capsule_player);
+		result = c2RaytoAABB(ray_mouse, aabb_player);
+		result = c2RaytoCapsule(ray_mouse, capsule_player);
+		result = c2RaytoCircle(ray_mouse, circle_player);
+		result = c2RaytoPoly(ray_mouse, polygon_player);
+		result = c2CapsuletoCapsule(capsule_mouse, capsule_player);
+
+		#endif // !test
+
+		result = c2AABBtoPoly(aabb_player, polygon_mouse, NULL);
+		//result = c2AABBtoAABB(aabb_mouse, aabb_player);
 		std::cout << ((result != 0) ? ("Collision") : "") << std::endl;
 		if (result){
 			player.getAnimatedSprite().setColor(sf::Color(255,0,0));
+			
+			
 		}
 		else {
 			player.getAnimatedSprite().setColor(sf::Color(0, 255, 0));
+			
 		}
+
+
+
+
+		m_text[0].setString("Press Left Arrow To Cycle\nThrough Current Player Boundary\nCurrent Player Boundary: " );
+		m_text[1].setString("Press Right Arrow To Cycle\nThrough Current Mouse Boundary\nCurrent Mouse Boundary: ");
+
 
 		// Clear screen
 		window.clear();
@@ -157,6 +254,10 @@ int main()
 		// Draw the Players Current Animated Sprite
 		window.draw(player.getAnimatedSprite());
 		window.draw(mouse);
+		for (int i = 0; i < 2; i++)
+		{
+			window.draw(m_text[i]);
+		}
 
 		// Update the window
 		window.display();
@@ -164,3 +265,4 @@ int main()
 
 	return EXIT_SUCCESS;
 };
+
