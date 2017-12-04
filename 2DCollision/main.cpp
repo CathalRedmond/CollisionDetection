@@ -9,7 +9,6 @@
 #include <Input.h>
 #include <Debug.h>
 
-#include "Tinyc2Debug.hpp"
 
 
 
@@ -24,7 +23,6 @@ int main()
 	sf::RenderWindow window(sf::VideoMode(800, 600), "SFML window");
 
 
-	Tinyc2Debug tinyc2Debug(window);
 
 	// Load a sprite to display
 	sf::Texture sprite_sheet;
@@ -243,7 +241,6 @@ int main()
 		// Update the Player
 		player.update();
 
-		// Check for collisions
 
 		
 		
